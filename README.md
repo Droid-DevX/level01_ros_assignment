@@ -1,8 +1,8 @@
-# Level 1: ROS 2 Navigation Assignment — ERIC Robotics
+# Level 1: ROS 2 Navigation Assignment ERIC Robotics - Ayush Tandon
 
-**Candidate:** Ayush (GitHub: [@Droid-DevX](https://github.com/Droid-DevX))
-**Branch:** `feature/ros-navigation`
+
 **Environment:** ROS 2 Humble | Gazebo Classic 11.10.2 | Ubuntu 22.04 LTS
+## Demo
 
 ---
 
@@ -25,45 +25,49 @@ Implementation of the ERIC Robotics Level 1 ROS 2 Navigation Assignment for the 
 ### 2.1 System overview
 
 ```mermaid
-flowchart LR
-    subgraph SIM["Gazebo Classic"]
-        ROBOT["Testbed-T1.0.0<br/>diff drive + LiDAR + IMU"]
+flowchart TD
+    CLIENT["RViz Nav2 Goal / move_to CLI"]
+
+    subgraph Navigation["navigation.launch.py"]
+        BT["bt_navigator"]
+        PLN["planner_server (NavFn + global costmap)"]
+        CTRL["controller_server (DWB + local costmap)"]
+        BEH["behavior_server (spin, backup, drive_on_heading, wait)"]
+        LMN["lifecycle_manager_navigation"]
     end
 
-    subgraph MAPL["map_loader.launch.py"]
-        MS["map_server"]
-        LMM["lifecycle_manager_map"]
-    end
-
-    subgraph LOC["localization.launch.py"]
+    subgraph Localization["localization.launch.py"]
         AMCL["amcl"]
         LML["lifecycle_manager_localization"]
     end
 
-    subgraph NAV["navigation.launch.py"]
-        BT["bt_navigator"]
-        PLN["planner_server<br/>NavFn + global costmap"]
-        CTRL["controller_server<br/>DWB + local costmap"]
-        BEH["behavior_server<br/>spin, backup, drive_on_heading, wait"]
-        LMN["lifecycle_manager_navigation"]
+    subgraph MapLoader["map_loader.launch.py"]
+        MS["map_server"]
+        LMM["lifecycle_manager_map"]
     end
 
-    CLIENT["RViz Nav2 Goal<br/>or move_to CLI"]
+    subgraph Simulation["Gazebo Classic"]
+        ROBOT["Testbed-T1.0.0 (diff drive + LiDAR + IMU)"]
+    end
+
+    CLIENT -->|"NavigateToPose action"| BT
+    BT -->|"ComputePathToPose"| PLN
+    BT -->|"FollowPath"| CTRL
+    BT -->|"recovery"| BEH
+
+    MS -->|"/map"| AMCL
+    MS -->|"/map"| PLN
+    AMCL -->|"TF map to odom"| PLN
+    AMCL -->|"TF map to odom"| CTRL
 
     ROBOT -->|"/scan"| AMCL
     ROBOT -->|"/scan"| PLN
     ROBOT -->|"/scan"| CTRL
     ROBOT -->|"/odom"| AMCL
-    MS -->|"/map"| AMCL
-    MS -->|"/map"| PLN
-    AMCL -->|"TF map to odom"| PLN
-    AMCL -->|"TF map to odom"| CTRL
-    CLIENT -->|"NavigateToPose action"| BT
-    BT -->|"ComputePathToPose"| PLN
-    BT -->|"FollowPath"| CTRL
-    BT -->|"recovery"| BEH
+
     CTRL -->|"/cmd_vel"| ROBOT
     BEH -->|"/cmd_vel"| ROBOT
+
     LMM -.->|"configure + activate"| MS
     LML -.->|"configure + activate"| AMCL
     LMN -.->|"configure + activate"| BT
@@ -230,7 +234,7 @@ ros2 pkg prefix testbed_navigation
 ros2 run testbed_navigation move_to --list
 ```
 
-The last command must list the waypoints. If it errors, the install step in `CMakeLists.txt` is wrong.
+The last command should list the rooms. If it errors, the install step in `CMakeLists.txt` is wrong.
 
 ### Terminal 1: simulation
 
@@ -258,21 +262,15 @@ source install/setup.bash
 ros2 launch testbed_navigation testbed_navigation.launch.py
 ```
 
-### Terminal 3: checks and goals
+### Terminal 3: move by name
 
 ```bash
 cd ~/Robotics/level01_ros_assignment
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 
-# All six must print: active [3]
 for n in map_server amcl controller_server planner_server behavior_server bt_navigator; do echo -n "$n: "; ros2 lifecycle get /$n; done
 
-# TF and pose
-timeout 5 ros2 run tf2_ros tf2_echo map odom
-ros2 topic echo /amcl_pose --once --field pose.pose.position
-
-# Move by name
 ./move_to --list
 ./move_to "living room"
 ./move_to "go to bathroom"
@@ -280,7 +278,7 @@ ros2 topic echo /amcl_pose --once --field pose.pose.position
 ./move_to "return home"
 ```
 
-`ros2 run testbed_navigation move_to <name>` works from any sourced terminal. Send the next goal only after the previous one prints `SUCCEEDED`.
+The `ros2 run testbed_navigation move_to <room>` form works from any sourced terminal. Send the next goal only after the previous one prints `SUCCEEDED`.
 
 ### Raw action goal (alternative)
 
@@ -360,4 +358,4 @@ Notes:
 - **Name:** Ayush
 - **GitHub:** [https://github.com/Droid-DevX](https://github.com/Droid-DevX)
 - **Fork:** [https://github.com/Droid-DevX/level01_ros_assignment](https://github.com/Droid-DevX/level01_ros_assignment)
-- **Branch:** `feature/ros-navigation`
+
