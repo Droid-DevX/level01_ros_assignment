@@ -7,6 +7,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     pkg_testbed_navigation = get_package_share_directory('testbed_navigation')
     default_rviz_config = os.path.join(pkg_testbed_navigation, 'rviz', 'testbed_navigation.rviz')

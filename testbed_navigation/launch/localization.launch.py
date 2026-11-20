@@ -7,6 +7,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     pkg_testbed_navigation = get_package_share_directory('testbed_navigation')
     default_params_file = os.path.join(pkg_testbed_navigation, 'config', 'amcl_params.yaml')
@@ -33,7 +34,6 @@ def generate_launch_description():
         description='Full path to the ROS2 parameters file to use for all launched nodes'
     )
 
-    # AMCL node
     start_amcl_cmd = Node(
         package='nav2_amcl',
         executable='amcl',
@@ -43,7 +43,6 @@ def generate_launch_description():
         remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')]
     )
 
-    # Lifecycle Manager node for localization
     start_lifecycle_manager_cmd = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',

@@ -7,6 +7,7 @@ from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDesc
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
+
 def generate_launch_description():
     pkg_testbed_navigation = get_package_share_directory('testbed_navigation')
 
@@ -58,7 +59,6 @@ def generate_launch_description():
         description='Full path to AMCL localization parameters file'
     )
 
-    # 1. Map loader (scoped)
     map_loader_group = GroupAction(
         actions=[
             IncludeLaunchDescription(
@@ -75,7 +75,8 @@ def generate_launch_description():
         scoped=True
     )
 
-    # 2. Localization (scoped, with amcl_params_file)
+    # Explicitly pass amcl_params_file so parent params_file (nav2_params.yaml)
+    # does not override child AMCL configuration
     localization_group = GroupAction(
         actions=[
             IncludeLaunchDescription(
@@ -92,7 +93,6 @@ def generate_launch_description():
         scoped=True
     )
 
-    # 3. Navigation (scoped, with params_file)
     navigation_group = GroupAction(
         actions=[
             IncludeLaunchDescription(

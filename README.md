@@ -8,21 +8,21 @@
 
 ## 1. Executive Summary
 
-This repository contains the complete, production-grade implementation of the ERIC Robotics Level 1 ROS 2 Navigation Assignment for the **Testbed-T1.0.0** differential-drive mobile robot.
+This repository contains the complete implementation of the ERIC Robotics Level 1 ROS 2 Navigation Assignment for the **Testbed-T1.0.0** differential-drive mobile robot.
 
 ### Core Objectives Delivered:
-1. **Repository Audit & Bug Resolution:** Identified, analyzed, and corrected 8 starter-code defects spanning build configuration, URDF modeling, sensor boundaries, map paths, and clock synchronization (documented in [BUGS_FIXED.txt](file:///home/ayush/Robotics/level01_ros_assignment/BUGS_FIXED.txt)).
+1. **Repository Audit & Bug Resolution:** Identified, analyzed, and corrected 9 starter-code defects spanning build configuration, URDF modeling, sensor boundaries, map paths, kinematics, and clock synchronization (documented in [BUGS_FIXED.txt](./BUGS_FIXED.txt)).
 2. **Modular Nav2 Stack (`testbed_navigation`):** Built a dedicated `ament_cmake` package strictly avoiding monolithic `nav2_bringup`. The navigation stack is partitioned into three independent, lifecycle-managed subsystems:
    - **Map Loader (`map_loader.launch.py`):** Loads and activates the 2D occupancy grid via `nav2_map_server`.
-   - **Localization (`localization.launch.py`):** Probabilistic 2D pose estimation using `nav2_amcl` establishing the `map` $\rightarrow$ `odom` TF link.
+   - **Localization (`localization.launch.py`):** Probabilistic 2D pose estimation using `nav2_amcl` establishing the map -> odom TF link.
    - **Navigation (`navigation.launch.py`):** Manual instantiation and coordination of Planner Server (NavFn), Controller Server (DWB Local Planner), Behavior Server, BT Navigator, and Costmaps.
-3. **Rigorous Verification:** Full end-to-end execution verified in Gazebo and RViz, achieving successful path planning, obstacle avoidance, and goal attainment (`SUCCEEDED`).
+3. **System Verification:** Full end-to-end execution verified in Gazebo and RViz, achieving successful path planning, obstacle avoidance, and goal attainment (`SUCCEEDED`).
 
 ---
 
 ## 2. System & Robot Architecture
 
-Complete specifications are detailed in [ROBOT_ARCHITECTURE.md](file:///home/ayush/Robotics/level01_ros_assignment/ROBOT_ARCHITECTURE.md).
+Complete specifications are detailed in [ROBOT_ARCHITECTURE.md](./docs/ROBOT_ARCHITECTURE.md).
 
 ### TF Transformation Hierarchy
 ```text
@@ -52,16 +52,17 @@ map
 
 ## 3. Starter-Code Defects Identified and Fixed
 
-Full descriptions and technical justifications are recorded in [BUGS_FIXED.txt](file:///home/ayush/Robotics/level01_ros_assignment/BUGS_FIXED.txt):
+Full descriptions and technical justifications are recorded in [BUGS_FIXED.txt](./BUGS_FIXED.txt):
 
-1. **`testbed_description/CMakeLists.txt`:** Corrected syntax error `ament_package` $\rightarrow$ `ament_package()`.
-2. **`testbed_bringup/maps/testbed_world.yaml`:** Corrected image path `wrong_path_testbed_world.pgm` $\rightarrow$ `testbed_world.pgm`.
+1. **`testbed_description/CMakeLists.txt`:** Corrected syntax error `ament_package` -> `ament_package()`.
+2. **`testbed_bringup/maps/testbed_world.yaml`:** Corrected image path `wrong_path_testbed_world.pgm` -> `testbed_world.pgm`.
 3. **`testbed_bringup/CMakeLists.txt`:** Added `maps` directory to CMake install target.
 4. **`testbed_gazebo/CMakeLists.txt`:** Added `models` directory to CMake install target.
 5. **`testbed_description/urdf/testbed.gazebo`:** Fixed malformed IMU XML tag containing duplicate closing angle bracket.
 6. **`testbed_description/urdf/testbed.gazebo`:** Removed obsolete ROS 1 `libgazebo_ros_control.so` plugin. Actuation is natively handled by `libgazebo_ros_diff_drive.so`.
 7. **`testbed_description/urdf/testbed.gazebo`:** Increased LiDAR `<max>` range from `1.5` m to `10.0` m (room obstacles from spawn are 3.32 m away).
 8. **`testbed_description/launch/robot_description.launch.py`:** Added `use_sim_time: True` to `robot_state_publisher` to synchronize TF timestamps with `/clock`.
+9. **`testbed_description/urdf/testbed.gazebo`:** Corrected differential drive `<wheel_separation>` parameter from `0.35` m to `0.346` m to match actual URDF wheel joint origins.
 
 ---
 
@@ -96,9 +97,12 @@ level01_ros_assignment/
 │   ├── CMakeLists.txt
 │   ├── package.xml
 │   └── README.md
+├── docs/
+│   ├── media/                     # Visualization and demonstration screenshots
+│   │   ├── amcl_localization.png
+│   │   └── navigation_path_costmap.png
+│   └── ROBOT_ARCHITECTURE.md      # Technical specifications and TF breakdown
 ├── BUGS_FIXED.txt                 # Detailed defect analysis and fixes
-├── IMPLEMENTATION_PROGRESS.md     # Phase-by-phase implementation log
-├── ROBOT_ARCHITECTURE.md          # Technical specifications and TF breakdown
 ├── help.md                        # Assignment FAQs and guidelines
 └── README.md                      # Primary project documentation
 ```
@@ -136,7 +140,7 @@ The assignment requires independent verification of each subsystem. Open separat
 source install/setup.bash
 ros2 launch testbed_bringup testbed_full_bringup.launch.py
 ```
-*Verification:* Gazebo opens with `testbed_playground.world`, the robot spawns at $(0.0, 5.0, 0.0)$, and RViz launches.
+*Verification:* Gazebo opens with `testbed_playground.world`, the robot spawns at (0.0, 5.0, 0.0), and RViz launches.
 
 ### Step 2: Launch Independent Map Server
 ```bash
@@ -198,19 +202,29 @@ ros2 launch testbed_navigation testbed_navigation.launch.py
 | :--- | :--- | :--- |
 | **Build System** | `colcon build --symlink-install` | **PASSED** (4/4 packages built cleanly with 0 errors) |
 | **Gazebo Spawning** | `ros2 topic list` | **PASSED** (Entity spawned, `/scan`, `/odom`, `/tf` live) |
-| **LiDAR Sensor** | `ros2 topic echo /scan --once` | **PASSED** ($360^\circ$ FOV, obstacle ranges $3.4\text{ m} - 9.8\text{ m}$) |
+| **LiDAR Sensor** | `ros2 topic echo /scan --once` | **PASSED** (360 deg FOV, obstacle ranges 3.4 m - 9.8 m) |
 | **Odometry** | `ros2 topic echo /odom --once` | **PASSED** (100 Hz differential drive odometry) |
 | **Map Server** | `ros2 lifecycle get /map_server` | **PASSED** (State: `active [3]`, `/map` 405x400 published) |
 | **AMCL** | `ros2 lifecycle get /amcl` | **PASSED** (State: `active [3]`, `/amcl_pose` published) |
-| **TF Map $\rightarrow$ Odom** | `ros2 run tf2_ros tf2_echo map odom` | **PASSED** (Continuous localization transform broadcast) |
+| **TF Map -> Odom** | `ros2 run tf2_ros tf2_echo map odom` | **PASSED** (Continuous localization transform broadcast) |
 | **Navigation Lifecycle** | `ros2 lifecycle get /controller_server` | **PASSED** (All 4 nav servers `active [3]`) |
-| **Autonomous Navigation** | Action goal to $(2.0, 5.0, 0.0)$ | **PASSED** (`Goal finished with status: SUCCEEDED`) |
+| **Autonomous Navigation** | Action goal to (2.0, 5.0, 0.0) | **PASSED** (`Goal finished with status: SUCCEEDED`) |
+
+### Visual Verification & Demonstration Artifacts
+
+#### 1. AMCL Localization & Particle Cloud
+*Robot localized in Gazebo testbed playground with 2D occupancy grid, AMCL pose arrow, and particle filter cloud (`Global Status: Ok`, `Localization: active`):*
+![AMCL Localization & Particle Cloud](./docs/media/amcl_localization.png)
+
+#### 2. Autonomous Navigation (Global Plan & Local Costmap)
+*Autonomous navigation execution showing global path, local costmap obstacle inflation, and active navigation controller feedback:*
+![Autonomous Navigation Path and Costmaps](./docs/media/navigation_path_costmap.png)
 
 ---
 
 ## 9. Troubleshooting & Engineering Notes
 
-- **Initial Pose Behavior:** AMCL is preconfigured in `amcl_params.yaml` with the default spawn coordinates $(x=0.0, y=5.0, \text{yaw}=0.0)$, so localization initializes automatically upon startup. You may also click **2D Pose Estimate** in RViz at any time.
+- **Initial Pose Behavior:** AMCL is preconfigured in `amcl_params.yaml` with the default spawn coordinates (x=0.0, y=5.0, yaw=0.0), so localization initializes automatically upon startup. You may also click **2D Pose Estimate** in RViz at any time.
 - **Clock Synchronization:** All nodes and costmaps are strictly configured with `use_sim_time: True` to ensure deterministic execution matching Gazebo's physics time.
 - **RMW Middleware:** Fast DDS operates stably with the current setup. If network UDP packet loss or discovery timeouts occur, switch to Cyclone DDS as advised in `help.md`:
   ```bash

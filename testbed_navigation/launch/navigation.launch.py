@@ -7,6 +7,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     pkg_testbed_navigation = get_package_share_directory('testbed_navigation')
     default_params_file = os.path.join(pkg_testbed_navigation, 'config', 'nav2_params.yaml')
@@ -45,7 +46,6 @@ def generate_launch_description():
         description='Full path to the ROS2 parameters file to use for all launched nodes'
     )
 
-    # 1. Controller Server
     start_controller_server_cmd = Node(
         package='nav2_controller',
         executable='controller_server',
@@ -55,7 +55,6 @@ def generate_launch_description():
         remappings=remappings
     )
 
-    # 2. Planner Server
     start_planner_server_cmd = Node(
         package='nav2_planner',
         executable='planner_server',
@@ -65,7 +64,6 @@ def generate_launch_description():
         remappings=remappings
     )
 
-    # 3. Behavior Server
     start_behavior_server_cmd = Node(
         package='nav2_behaviors',
         executable='behavior_server',
@@ -75,7 +73,6 @@ def generate_launch_description():
         remappings=remappings
     )
 
-    # 4. BT Navigator
     start_bt_navigator_cmd = Node(
         package='nav2_bt_navigator',
         executable='bt_navigator',
@@ -85,7 +82,6 @@ def generate_launch_description():
         remappings=remappings
     )
 
-    # 5. Lifecycle Manager
     start_lifecycle_manager_cmd = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',

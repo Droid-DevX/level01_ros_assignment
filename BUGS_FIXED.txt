@@ -58,11 +58,20 @@ ERIC ROBOTICS LEVEL 1 ROS 2 NAVIGATION ASSIGNMENT - BUGS IDENTIFIED AND FIXED
    - Fix: Added a DeclareLaunchArgument for 'use_sim_time' (defaulting to 'true') and passed {'use_sim_time': use_sim_time} to the Node parameters.
    - Verification: Verified launch description via 'ros2 launch --print'.
 
-9. BUG: Launch Configuration Shadowing in testbed_navigation.launch.py Depriving AMCL of Parameters
-   - File: testbed_navigation/launch/testbed_navigation.launch.py & testbed_navigation/config/nav2_params.yaml
-   - Issue: When 'testbed_navigation.launch.py' invoked 'localization.launch.py', both launch files declared an argument named 'params_file'. Because ROS 2 Python Launch shares an un-scoped configuration dictionary across included launch descriptions, 'localization.launch.py' inherited 'params_file' pointing to 'nav2_params.yaml' instead of its intended 'amcl_params.yaml'. Since 'nav2_params.yaml' did not contain an 'amcl:' block, AMCL booted with default parameters ('set_initial_pose: false').
-   - Impact: AMCL entered a dormant state waiting for an initial pose ('AMCL cannot publish a pose or update the transform. Please set the initial pose...'), leaving '/amcl_pose' unpublished and the 'map -> odom' TF link unbroadcasted. Global costmaps timed out waiting for the 'map' frame.
-   - Fix: (1) Wrapped child launch inclusions in 'GroupAction(..., scoped=True)' in 'testbed_navigation.launch.py' and explicitly passed a dedicated 'amcl_params_file' argument. (2) Embedded the full 'amcl:' parameters block directly into 'nav2_params.yaml' for redundancy.
-   - Verification: Verified via 'ros2 param dump /amcl' that 'set_initial_pose: true' and 'initial_pose: (0, 5, 0)' are active on startup, '/amcl_pose' publishes immediately, 'map -> odom' TF is continuously broadcasted, and autonomous navigation succeeds without manual intervention.
+9. BUG: Wheel Separation Mismatch in Gazebo Differential Drive Plugin
+   - File: testbed_description/urdf/testbed.gazebo (Line 16)
+   - Issue: The differential drive plugin configured '<wheel_separation>0.35</wheel_separation>', whereas the physical joint origins in 'testbed.xacro' ('left_wheel_joint' at y=0.135241, 'right_wheel_joint' at y=-0.210759) define an exact transverse wheel span of 0.346000 m.
+   - Impact: A 4 mm kinematic parameter mismatch introduced odometric errors during turning maneuvers and rotational velocity calculation.
+   - Fix: Corrected '<wheel_separation>0.35</wheel_separation>' to '<wheel_separation>0.346</wheel_separation>'.
+   - Verification: Verified against URDF joint origins and verified in simulation that angular velocities accurately correspond to wheel velocities.
+
+================================================================================
+INTEGRATION ISSUES FOUND DURING DEVELOPMENT
 ================================================================================
 
+1. ISSUE: Parent Launch Configuration Overriding Child AMCL Parameters
+   - File: testbed_navigation/launch/testbed_navigation.launch.py & testbed_navigation/config/nav2_params.yaml
+   - Description: The parent launch file's 'params_file' argument overrode the child launch file's default, so AMCL received 'nav2_params.yaml' without an amcl block. Consequently, AMCL initialized with unconfigured defaults ('set_initial_pose: false') and remained dormant without broadcasting the 'map -> odom' transform.
+   - Resolution: Fixed by explicitly passing a dedicated 'amcl_params_file' argument to the localization launch include. As an additional measure, child inclusions were scoped with GroupAction, and the amcl parameters were also mirrored into nav2_params.yaml.
+   - Verification: Verified that AMCL activates with 'set_initial_pose: true' and immediately publishes '/amcl_pose' and 'map -> odom' TF upon launch.
+================================================================================

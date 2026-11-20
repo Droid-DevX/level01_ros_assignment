@@ -21,7 +21,7 @@ To adhere strictly to ERIC Robotics assignment guidelines, this package does **n
    - Instantiates `nav2_amcl::amcl` configured via `config/amcl_params.yaml`.
    - Uses `nav2_amcl::DifferentialMotionModel` for kinematics.
    - Publishes `/amcl_pose` and broadcasts the global `map` -> `odom` TF transform.
-   - Pre-seeds initial pose at $(x=0.0, y=5.0, \text{yaw}=0.0)$, matching the Gazebo spawn coordinates.
+   - Pre-seeds initial pose at (x=0.0, y=5.0, yaw=0.0), matching the Gazebo spawn coordinates.
    - Command:
      ```bash
      ros2 launch testbed_navigation localization.launch.py
