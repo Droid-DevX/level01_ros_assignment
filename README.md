@@ -88,12 +88,15 @@ level01_ros_assignment/
 ├── testbed_navigation/            # [NEW] Modular ROS 2 Nav2 Navigation Package
 │   ├── config/
 │   │   ├── amcl_params.yaml       # Tuned AMCL parameters (DifferentialMotionModel, frames, initial pose)
-│   │   └── nav2_params.yaml       # NavFn planner, DWB controller, costmaps, and behavior tree configs
+│   │   ├── nav2_params.yaml       # NavFn planner, DWB controller, costmaps, and behavior tree configs
+│   │   └── waypoints.yaml         # Semantic room waypoints and natural language aliases
 │   ├── launch/
 │   │   ├── map_loader.launch.py   # Independent Map Server + Lifecycle Manager
 │   │   ├── localization.launch.py # Independent AMCL Localization + Lifecycle Manager
 │   │   ├── navigation.launch.py   # Independent manual Nav2 node instantiation
 │   │   └── testbed_navigation.launch.py # Unified demonstration launch
+│   ├── scripts/
+│   │   └── move_to.py             # Semantic navigation client CLI
 │   ├── CMakeLists.txt
 │   ├── package.xml
 │   └── README.md
@@ -102,6 +105,7 @@ level01_ros_assignment/
 │   │   ├── amcl_localization.png
 │   │   └── navigation_path_costmap.png
 │   └── ROBOT_ARCHITECTURE.md      # Technical specifications and TF breakdown
+├── move_to                        # CLI shortcut for semantic navigation
 ├── BUGS_FIXED.txt                 # Detailed defect analysis and fixes
 ├── help.md                        # Assignment FAQs and guidelines
 └── README.md                      # Primary project documentation
@@ -175,7 +179,30 @@ ros2 action list # shows /navigate_to_pose, /compute_path_to_pose, etc.
 ```
 
 ### Step 5: Send Autonomous Navigation Goal
-You can send a goal interactively via the **2D Goal Pose** tool in RViz, or via terminal:
+You can send a goal interactively via the **2D Goal Pose** tool in RViz, via raw action CLI, or using the semantic room command:
+
+**Option A — Semantic Room Command (Recommended):**
+```bash
+./move_to "living room"
+./move_to "hallway"
+./move_to "kitchen"
+./move_to "bathroom"
+./move_to "bedroom"
+./move_to "dining room"
+./move_to "home"
+```
+Or via ROS 2 CLI:
+```bash
+ros2 run testbed_navigation move_to living_room
+ros2 run testbed_navigation move_to kitchen
+ros2 run testbed_navigation move_to bathroom
+```
+To list all defined rooms, actual coordinates, and aliases:
+```bash
+./move_to --list
+```
+
+**Option B — Raw Action Goal:**
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   "{pose: {header: {frame_id: 'map'}, pose: {position: {x: 2.0, y: 5.0, z: 0.0}, orientation: {w: 1.0}}}}"

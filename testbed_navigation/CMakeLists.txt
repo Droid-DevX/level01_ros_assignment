@@ -16,6 +16,15 @@ install(
     share/${PROJECT_NAME}/
 )
 
+install(
+  PROGRAMS
+    scripts/move_to.py
+  DESTINATION
+    lib/${PROJECT_NAME}
+  RENAME
+    move_to
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)

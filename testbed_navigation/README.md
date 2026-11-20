@@ -50,3 +50,18 @@ To adhere strictly to ERIC Robotics assignment guidelines, this package does **n
 
 - `config/amcl_params.yaml`: Motion model noise parameters, particle filter bounds (500–2000), beam likelihood field model, frame IDs (`map`, `odom`, `base_footprint`), and initial pose coordinates.
 - `config/nav2_params.yaml`: Controller parameters (velocity/acceleration limits, critics, goal tolerances), Navfn global planner tolerance, costmap layers (static, obstacle, inflation), behavior plugins, and behavior tree navigators.
+- `config/waypoints.yaml`: Semantic room definitions, map coordinates (x, y, yaw), and natural language alias mappings for high-level goal commanding.
+
+## Semantic Navigation CLI (`move_to`)
+
+The package includes a semantic command tool allowing users to command the robot by room name or natural language phrase instead of manual coordinates:
+
+```bash
+# Display all configured rooms and aliases
+ros2 run testbed_navigation move_to --list
+
+# Navigate to rooms by name or natural language
+ros2 run testbed_navigation move_to living_room
+ros2 run testbed_navigation move_to "go to bathroom"
+ros2 run testbed_navigation move_to home
+```
