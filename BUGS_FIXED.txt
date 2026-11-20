@@ -57,5 +57,12 @@ ERIC ROBOTICS LEVEL 1 ROS 2 NAVIGATION ASSIGNMENT - BUGS IDENTIFIED AND FIXED
    - Impact: In simulation, robot_state_publisher published TF frames with wall-clock time instead of simulation time (/clock), causing TF timestamp desynchronization, TF extrapolation errors in RViz, AMCL, and Nav2 costmaps.
    - Fix: Added a DeclareLaunchArgument for 'use_sim_time' (defaulting to 'true') and passed {'use_sim_time': use_sim_time} to the Node parameters.
    - Verification: Verified launch description via 'ros2 launch --print'.
+
+9. BUG: Launch Configuration Shadowing in testbed_navigation.launch.py Depriving AMCL of Parameters
+   - File: testbed_navigation/launch/testbed_navigation.launch.py & testbed_navigation/config/nav2_params.yaml
+   - Issue: When 'testbed_navigation.launch.py' invoked 'localization.launch.py', both launch files declared an argument named 'params_file'. Because ROS 2 Python Launch shares an un-scoped configuration dictionary across included launch descriptions, 'localization.launch.py' inherited 'params_file' pointing to 'nav2_params.yaml' instead of its intended 'amcl_params.yaml'. Since 'nav2_params.yaml' did not contain an 'amcl:' block, AMCL booted with default parameters ('set_initial_pose: false').
+   - Impact: AMCL entered a dormant state waiting for an initial pose ('AMCL cannot publish a pose or update the transform. Please set the initial pose...'), leaving '/amcl_pose' unpublished and the 'map -> odom' TF link unbroadcasted. Global costmaps timed out waiting for the 'map' frame.
+   - Fix: (1) Wrapped child launch inclusions in 'GroupAction(..., scoped=True)' in 'testbed_navigation.launch.py' and explicitly passed a dedicated 'amcl_params_file' argument. (2) Embedded the full 'amcl:' parameters block directly into 'nav2_params.yaml' for redundancy.
+   - Verification: Verified via 'ros2 param dump /amcl' that 'set_initial_pose: true' and 'initial_pose: (0, 5, 0)' are active on startup, '/amcl_pose' publishes immediately, 'map -> odom' TF is continuously broadcasted, and autonomous navigation succeeds without manual intervention.
 ================================================================================
 
