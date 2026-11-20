@@ -3,7 +3,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -14,6 +14,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
     map_yaml_file = LaunchConfiguration('map')
     params_file = LaunchConfiguration('params_file')
+    amcl_params_file = LaunchConfiguration('amcl_params_file')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
@@ -47,39 +48,65 @@ def generate_launch_description():
         description='Full path to navigation parameters file'
     )
 
-    # Include independent map loader
-    map_loader_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_testbed_navigation, 'launch', 'map_loader.launch.py')
+    declare_amcl_params_file_cmd = DeclareLaunchArgument(
+        'amcl_params_file',
+        default_value=os.path.join(
+            pkg_testbed_navigation,
+            'config',
+            'amcl_params.yaml'
         ),
-        launch_arguments={
-            'use_sim_time': use_sim_time,
-            'map': map_yaml_file,
-            'autostart': autostart
-        }.items()
+        description='Full path to AMCL localization parameters file'
     )
 
-    # Include independent localization
-    localization_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_testbed_navigation, 'launch', 'localization.launch.py')
-        ),
-        launch_arguments={
-            'use_sim_time': use_sim_time,
-            'autostart': autostart
-        }.items()
+    # 1. Map loader (scoped)
+    map_loader_group = GroupAction(
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_testbed_navigation, 'launch', 'map_loader.launch.py')
+                ),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'map': map_yaml_file,
+                    'autostart': autostart
+                }.items()
+            )
+        ],
+        scoped=True
     )
 
-    # Include independent navigation
-    navigation_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_testbed_navigation, 'launch', 'navigation.launch.py')
-        ),
-        launch_arguments={
-            'use_sim_time': use_sim_time,
-            'params_file': params_file,
-            'autostart': autostart
-        }.items()
+    # 2. Localization (scoped, with amcl_params_file)
+    localization_group = GroupAction(
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_testbed_navigation, 'launch', 'localization.launch.py')
+                ),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'autostart': autostart,
+                    'params_file': amcl_params_file
+                }.items()
+            )
+        ],
+        scoped=True
+    )
+
+    # 3. Navigation (scoped, with params_file)
+    navigation_group = GroupAction(
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_testbed_navigation, 'launch', 'navigation.launch.py')
+                ),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'params_file': params_file,
+                    'autostart': autostart
+                }.items()
+            )
+        ],
+        scoped=True
     )
 
     ld = LaunchDescription()
@@ -87,8 +114,9 @@ def generate_launch_description():
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_map_yaml_cmd)
     ld.add_action(declare_params_file_cmd)
-    ld.add_action(map_loader_cmd)
-    ld.add_action(localization_cmd)
-    ld.add_action(navigation_cmd)
+    ld.add_action(declare_amcl_params_file_cmd)
+    ld.add_action(map_loader_group)
+    ld.add_action(localization_group)
+    ld.add_action(navigation_group)
 
     return ld

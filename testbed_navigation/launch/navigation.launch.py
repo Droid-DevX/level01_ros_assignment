@@ -49,6 +49,7 @@ def generate_launch_description():
     start_controller_server_cmd = Node(
         package='nav2_controller',
         executable='controller_server',
+        name='controller_server',
         output='screen',
         parameters=[params_file, {'use_sim_time': use_sim_time}],
         remappings=remappings
